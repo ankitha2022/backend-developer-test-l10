@@ -177,6 +177,113 @@ class User extends Authenticatable
     }
 
     /**
+     * Get unlocked achievements for the user.
+     *
+     * @return array
+     */
+    public function getUnlockedAchievements()
+    {
+        // Fetch unlocked lesson achievements
+        $lessonAchievements = $this->lessonAchievements->pluck('name')->toArray();
+
+        // Fetch unlocked comment achievements
+        $commentAchievements = $this->commentAchievements->pluck('name')->toArray();
+
+        // Combine and return both lesson and comment achievements
+        return array_merge($lessonAchievements, $commentAchievements);
+    }
+
+    /**
+     * Get next available achievements for the user.
+     *
+     * @return array
+     */
+    public function getNextAvailableAchievements()
+    {
+        // Fetch the user's unlocked achievements
+        $unlockedAchievements = $this->getUnlockedAchievements();
+
+        // Define an array to store the next available achievements
+        $nextAvailableAchievements = [];
+
+        // Group the achievements into lesson and comment achievements
+        $lessonAchievements = DefaultLessonAchievement::all();
+        $commentAchievements = DefaultCommentAchievement::all();
+
+        // Loop through lesson achievements
+        foreach ($lessonAchievements as $achievement) {
+            if (!in_array($achievement->name, $unlockedAchievements)) {
+                $nextAvailableAchievements[] = $achievement->name;
+                break; // Break after adding the next lesson achievement.
+            }
+        }
+
+        // Loop through comment achievements
+        foreach ($commentAchievements as $achievement) {
+            if (!in_array($achievement->name, $unlockedAchievements)) {
+                $nextAvailableAchievements[] = $achievement->name;
+                break; // Break after adding the next comment achievement.
+            }
+        }
+
+        return $nextAvailableAchievements;
+    }
+
+
+    /**
+     * Get the current badge for the user.
+     *
+     * @return string
+     */
+    public function getCurrentBadge()
+    {
+    $unlockedAchievementsCount = $this->getUnlockedAchievements();
+
+    // Determine the user's current badge based on their unlocked achievements.
+    $badge = DefaultBadgeAchievement::where('totalNumber', '<=', count($unlockedAchievementsCount))
+    ->orderBy('totalNumber', 'desc')
+    ->first();
+
+    return $badge ? $badge->name : 'Beginner'; // Default to Beginner if no badge is found.
+    }
+
+    public function remainingToUnlockNextBadge()
+    {
+        // Calculate the number of achievements needed to unlock the next badge
+        $unlockedAchievementsCount = count($this->getUnlockedAchievements());
+        
+        // Find the next badge
+        $nextBadge = DefaultBadgeAchievement::where('totalNumber', '>', $unlockedAchievementsCount)
+            ->orderBy('totalNumber')
+            ->first();
+
+        if ($nextBadge) {
+            $remainingAchievementsNeeded = $nextBadge->totalNumber - $unlockedAchievementsCount;
+            return $remainingAchievementsNeeded;
+        }
+
+        return 0; // No next badge found, the user may have unlocked all badges.
+    }
+
+    /**
+     * Get the next badge the user can earn.
+     *
+     * @return string
+     */
+    public function getNextBadge()
+    {
+        $unlockedAchievementsCount = $this->getUnlockedAchievements();
+
+        // Determine the next badge the user can earn based on their unlocked achievements.
+        $nextBadge = DefaultBadgeAchievement::where('totalNumber', '>', count($unlockedAchievementsCount))
+            ->orderBy('totalNumber')
+            ->first();
+
+        return $nextBadge ? $nextBadge->name : 'Master'; // Default to Master if no next badge is found.
+    }
+
+
+    /**
      * Get the achievement name to unlock based on lesson count.
      *
      * @return string|null

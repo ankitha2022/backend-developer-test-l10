@@ -13,8 +13,8 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        $lessons = Lesson::factory()
-            ->count(20)
-            ->create();
+        $this->call(LessonSeeder::class);
+        $this->call(CommentSeeder::class);
+        $this->call(BadgeSeeder::class);
     }
 }

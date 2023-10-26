@@ -35,8 +35,9 @@ class CommentWrittenListener
             // Unlock the comment achievement for the user.
             $user->unlockCommentAchievement($commentCountAchievementName);
             event(new AchievementUnlocked($commentCountAchievementName, $user));
+            $user->calculateBadge();
         }
-        $user->calculateBadge();
+        
     }
     
 }

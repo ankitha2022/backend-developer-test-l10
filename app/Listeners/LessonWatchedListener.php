@@ -37,8 +37,9 @@ class LessonWatchedListener
             // Unlock the lesson achievement for the user.
             $user->unlockLessonAchievement($lessonCountAchievementName);
             event(new AchievementUnlocked($lessonCountAchievementName, $user));
+            $user->calculateBadge();
         }
-        $user->calculateBadge();
+        
     }
 
 }

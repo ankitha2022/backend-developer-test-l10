@@ -13,7 +13,7 @@ use App\Models\User;
 
 class BadgeUnlocked
 {
-    use Dispatchable, SerializesModels;
+    use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public $badgeName;
     public $user;
@@ -27,5 +27,18 @@ class BadgeUnlocked
     {
         $this->badgeName = $badgeName;
         $this->user = $user;
+    }
+
+
+    /**
+     * Get the channels the event should broadcast on.
+     *
+     * @return array<int, \Illuminate\Broadcasting\Channel>
+     */
+    public function broadcastOn(): array
+    {
+        return [
+            new PrivateChannel('channel-name'),
+        ];
     }
 }

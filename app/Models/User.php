@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use App\Events\BadgeUnlocked;
 
 class User extends Authenticatable
 {
@@ -163,18 +164,40 @@ class User extends Authenticatable
     
     public function calculateBadge()
     {
-        $unlockedAchievementsCount = $this->unlockedAchievements->count();
-        
+        $unlockedAchievementsCount = $this->getUnlockedAchievementsCount();
         // Check if the user has enough achievements for a badge.
         if ($unlockedAchievementsCount >= 4) {
             $badge = DefaultBadgeAchievement::where('totalNumber', $unlockedAchievementsCount)->first();
-            
             if ($badge) {
-                $this->unlockBadge($badge->name);
                 event(new BadgeUnlocked($badge->name, $this));
             }
         }
+
     }
+
+    /**
+     * Get the count of unlocked achievements for the user.
+     *
+     * @return int
+     */
+    public function getUnlockedAchievementsCount()
+    {
+        $unlockedAchievements = $this->getUnlockedAchievements();
+        return count($unlockedAchievements);
+    }
+
+    /**
+     * Check if the user has a badge by name.
+     *
+     * @param string $badgeName
+     * @return bool
+     */
+    public function hasBadge($badgeName)
+    {
+        //  check if the user has a badge with the given name.
+        return $this->badgeAchievements()->where('name', $badgeName)->exists();
+    }
+
 
     /**
      * Get unlocked achievements for the user.
